@@ -1,0 +1,6 @@
+{
+  "name": "I-Ching",
+  "description": "Ancient Book of Changes divination, coin casting oracle, 64 hexagram library, and reading journal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

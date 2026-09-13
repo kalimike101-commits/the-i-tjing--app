@@ -5,6 +5,7 @@ import com.example.data.model.Hexagram
 import com.example.data.model.TossResult
 import com.example.data.model.Trigram
 import com.example.data.model.UserProfile
+import com.example.util.SpokenReadingBuilder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -380,6 +381,65 @@ class ExampleUnitTest {
     assertEquals("Act with moral clarity and perseverance.", modelWithSeparatedLayers.advice)
     assertEquals("Beware hubris and premature action.", modelWithSeparatedLayers.caution)
     assertEquals(6, modelWithSeparatedLayers.lineInterpretations?.size)
+  }
+
+  @Test
+  fun spokenReadingBuilderWithoutChangingLines() {
+    val qian = HexagramLibrary.getByNumber(1)!!
+    val spokenText = SpokenReadingBuilder.buildSpokenText(
+      primary = qian,
+      changingLineIndices = emptyList(),
+      transformed = null
+    )
+
+    // Primary hexagram number and name
+    assertTrue(spokenText.startsWith("Hexagram 1, The Creative."))
+
+    // Contains judgment, image, and commentary
+    assertTrue(spokenText.contains(qian.judgment))
+    assertTrue(spokenText.contains(qian.theImage))
+    assertTrue(spokenText.contains(qian.commentary))
+
+    // Must NOT announce changing lines or invent transformed hexagram when none changed
+    assertFalse(spokenText.contains("Changing lines"))
+    assertFalse(spokenText.contains("transforms into Hexagram"))
+
+    // Must NOT speak UI button or label names
+    assertFalse(spokenText.contains("DIVINATION REVEALED"))
+    assertFalse(spokenText.contains("The Judgment (彖辭 / 卦辭)"))
+    assertFalse(spokenText.contains("The Image (象辭)"))
+    assertFalse(spokenText.contains("Save Reading"))
+    assertFalse(spokenText.contains("New Cast"))
+  }
+
+  @Test
+  fun spokenReadingBuilderWithChangingLinesAndTransformation() {
+    val primary = HexagramLibrary.getByNumber(1)!!
+    val transformed = HexagramLibrary.getByNumber(44)!!
+    val changingLines = listOf(1)
+
+    val spokenText = SpokenReadingBuilder.buildSpokenText(
+      primary = primary,
+      changingLineIndices = changingLines,
+      transformed = transformed
+    )
+
+    // 1. Primary hexagram
+    assertTrue(spokenText.startsWith("Hexagram 1, The Creative."))
+
+    // 2. Main interpretation
+    assertTrue(spokenText.contains(primary.judgment))
+    assertTrue(spokenText.contains(primary.theImage))
+
+    // 3. Relevant changing line
+    assertTrue(spokenText.contains(primary.lineTexts[0]))
+
+    // 4. Transformed hexagram number and name
+    assertTrue(spokenText.contains("This transforms into Hexagram 44, Coming to Meet."))
+
+    // 5. Concluding interpretation / advice
+    assertTrue(spokenText.contains(primary.commentary))
+    assertTrue(spokenText.contains(transformed.commentary))
   }
 }
 

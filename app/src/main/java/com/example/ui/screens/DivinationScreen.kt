@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.BookmarkAdded
 import androidx.compose.material.icons.filled.Check
@@ -31,6 +32,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Spa
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -46,12 +48,17 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -69,6 +76,8 @@ import com.example.ui.theme.SoftGold
 import com.example.ui.theme.WarmBronze
 import com.example.ui.viewmodel.DivinationUiState
 import com.example.ui.viewmodel.IChingViewModel
+import com.example.util.IChingTextToSpeechHelper
+import com.example.util.SpokenReadingBuilder
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -379,6 +388,21 @@ private fun DivinationResultView(
     val transformed = state.transformedHexagram
     val changingIndices = state.changingLineIndices
 
+    val context = LocalContext.current
+    var isSpeaking by remember { mutableStateOf(false) }
+
+    val ttsHelper = remember {
+        IChingTextToSpeechHelper(context) { speaking ->
+            isSpeaking = speaking
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            ttsHelper.shutdown()
+        }
+    }
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -409,6 +433,54 @@ private fun DivinationResultView(
                     .size(6.dp)
                     .clip(CircleShape)
                     .background(ImperialGold)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Read Aloud / Stop Audio Guidance Button
+        OutlinedButton(
+            onClick = {
+                if (isSpeaking) {
+                    ttsHelper.stop()
+                } else {
+                    val textToSpeak = SpokenReadingBuilder.buildSpokenText(
+                        primary = primary,
+                        changingLineIndices = changingIndices,
+                        transformed = transformed
+                    )
+                    ttsHelper.speak(textToSpeak)
+                }
+            },
+            modifier = Modifier
+                .testTag("read_aloud_button")
+                .padding(vertical = 4.dp),
+            colors = if (isSpeaking) {
+                ButtonDefaults.outlinedButtonColors(
+                    containerColor = BrightCinnabar.copy(alpha = 0.12f),
+                    contentColor = BrightCinnabar
+                )
+            } else {
+                ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            },
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (isSpeaking) BrightCinnabar else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+            ),
+            shape = RoundedCornerShape(20.dp)
+        ) {
+            Icon(
+                imageVector = if (isSpeaking) Icons.Default.Stop else Icons.AutoMirrored.Filled.VolumeUp,
+                contentDescription = if (isSpeaking) "Stop reading aloud" else "Read aloud",
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (isSpeaking) "Stop" else "Read aloud",
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp
             )
         }
 
@@ -585,7 +657,10 @@ private fun DivinationResultView(
                     }
 
                     OutlinedButton(
-                        onClick = onReset,
+                        onClick = {
+                            ttsHelper.stop()
+                            onReset()
+                        },
                         modifier = Modifier.testTag("new_cast_button"),
                         shape = RoundedCornerShape(12.dp)
                     ) {

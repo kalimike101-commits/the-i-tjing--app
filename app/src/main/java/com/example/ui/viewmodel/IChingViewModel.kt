@@ -84,9 +84,12 @@ class IChingViewModel(application: Application) : AndroidViewModel(application) 
     private val _divinationState = MutableStateFlow(DivinationUiState())
     val divinationState: StateFlow<DivinationUiState> = _divinationState.asStateFlow()
 
-    // Explorer State
+    // Explorer & Global Search State
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _isSearchActive = MutableStateFlow(false)
+    val isSearchActive: StateFlow<Boolean> = _isSearchActive.asStateFlow()
 
     private val _selectedTrigramFilter = MutableStateFlow<Trigram?>(null)
     val selectedTrigramFilter: StateFlow<Trigram?> = _selectedTrigramFilter.asStateFlow()
@@ -264,7 +267,16 @@ class IChingViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    // Search and filter in explorer
+    // Search and filter
+    fun openSearch() {
+        _isSearchActive.value = true
+    }
+
+    fun closeSearch() {
+        _isSearchActive.value = false
+        _searchQuery.value = ""
+    }
+
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
     }

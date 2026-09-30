@@ -137,7 +137,7 @@ fun DivinationScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.AccountCircle,
-                    contentDescription = "Seeker Profile",
+                    contentDescription = "Idgie-ing Profile",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )

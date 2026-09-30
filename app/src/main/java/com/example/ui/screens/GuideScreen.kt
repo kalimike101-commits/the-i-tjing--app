@@ -313,7 +313,7 @@ fun GuideScreen(
         // Seeker Profile Card
         val userProfile by viewModel.userProfile.collectAsState()
         Text(
-            text = "Your Seeker Profile",
+            text = "Your Profile (Idgie-ing)",
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary

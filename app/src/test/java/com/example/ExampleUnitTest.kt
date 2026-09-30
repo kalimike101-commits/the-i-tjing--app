@@ -95,13 +95,41 @@ class ExampleUnitTest {
 
   @Test
   fun hexagramSearch() {
+    // Blank search returns all 64 hexagrams
+    val allResults = HexagramLibrary.search("")
+    assertEquals(64, allResults.size)
+
+    // Name search
     val peaceResults = HexagramLibrary.search("Peace")
     assertFalse(peaceResults.isEmpty())
     assertEquals(11, peaceResults.first().number)
 
-    val numericSearch = HexagramLibrary.search("64")
-    assertEquals(1, numericSearch.size)
-    assertEquals("未濟", numericSearch.first().chinese)
+    val creativeResults = HexagramLibrary.search("Creative")
+    assertFalse(creativeResults.isEmpty())
+    assertEquals(1, creativeResults.first().number)
+
+    // Exact numeric search for 64
+    val numericSearch64 = HexagramLibrary.search("64")
+    assertEquals(1, numericSearch64.size)
+    assertEquals(64, numericSearch64.first().number)
+    assertEquals("未濟", numericSearch64.first().chinese)
+
+    // Prefix numeric search for "1": exact 1 first, then 10..19
+    val numericSearch1 = HexagramLibrary.search("1")
+    assertEquals(1, numericSearch1.first().number)
+    assertTrue(numericSearch1.size >= 11)
+    val prefixNumbers = numericSearch1.map { it.number }
+    assertTrue(prefixNumbers.containsAll(listOf(1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19)))
+
+    // Chinese character search
+    val chineseSearch = HexagramLibrary.search("乾")
+    assertFalse(chineseSearch.isEmpty())
+    assertEquals(1, chineseSearch.first().number)
+
+    // Pinyin search
+    val pinyinSearch = HexagramLibrary.search("Qián")
+    assertFalse(pinyinSearch.isEmpty())
+    assertEquals(1, pinyinSearch.first().number)
   }
 
   @Test

@@ -1350,21 +1350,32 @@ object HexagramLibrary {
         val trimmed = query.trim()
         if (trimmed.isEmpty()) return allHexagrams
 
-        // If numeric
-        trimmed.toIntOrNull()?.let { num ->
-            val match = mapByNumber[num]
-            if (match != null) return listOf(match)
+        val exactNum = trimmed.toIntOrNull()?.let { mapByNumber[it] }
+        val prefixNumMatches = if (trimmed.all { it.isDigit() }) {
+            allHexagrams.filter {
+                it.number.toString().startsWith(trimmed) && it != exactNum
+            }.sortedBy { it.number }
+        } else {
+            emptyList()
         }
 
         val q = trimmed.lowercase()
-        return allHexagrams.filter { hex ->
-            hex.englishName.lowercase().contains(q) ||
-            hex.pinyin.lowercase().contains(q) ||
-            hex.chinese.contains(q) ||
-            hex.upperTrigram.englishName.lowercase().contains(q) ||
-            hex.lowerTrigram.englishName.lowercase().contains(q) ||
-            hex.upperTrigram.chinese.contains(q) ||
-            hex.lowerTrigram.chinese.contains(q)
+        val textMatches = allHexagrams.filter { hex ->
+            hex != exactNum && !prefixNumMatches.contains(hex) && (
+                hex.englishName.lowercase().contains(q) ||
+                hex.pinyin.lowercase().contains(q) ||
+                hex.chinese.contains(q) ||
+                hex.upperTrigram.englishName.lowercase().contains(q) ||
+                hex.lowerTrigram.englishName.lowercase().contains(q) ||
+                hex.upperTrigram.chinese.contains(q) ||
+                hex.lowerTrigram.chinese.contains(q)
+            )
         }
+
+        val results = mutableListOf<Hexagram>()
+        if (exactNum != null) results.add(exactNum)
+        results.addAll(prefixNumMatches)
+        results.addAll(textMatches)
+        return results
     }
 }
